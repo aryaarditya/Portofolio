@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+  <title>Portfolio - Canvas Editor Link (Secure)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: 'Inter', sans-serif; 
+      background-color: #050505; 
+      color: #ffffff; 
+      overflow-x: hidden;
+      overflow-y: auto;
+      height: 100vh;
+      position: relative;
+    }
+
+    #bg-video {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      object-fit: cover;
+      z-index: -2;
+      filter: brightness(0.9);
+      pointer-events: none;
+    }
+
+    #opening-overlay {
+      position: fixed; 
+      top: 0; left: 0; 
+      width: 100%; 
+      height: 100vh;
+      height: 100dvh;
+      z-index: 9999; 
+      background: #050505;
+      display: flex; 
+      justify-content: center; 
+      align-items: center;
+      transition: opacity 1.2s ease-in-out;
+      overflow: hidden;
+    }
+    #opening-overlay.hidden { 
+      opacity: 0; 
+      pointer-events: none; 
+    }
+
+    #opening-video { 
+      width: 100%; 
+      height: 100%; 
+      object-fit: contain;
+      background: #000;
+      display: block;
+      max-width: 100vw;
+      max-height: 100vh;
+      max-height: 100dvh;
+    }
+
+    .scene-container {
+      width: 100vw; 
+      height: 100vh;
+      height: 100dvh;
+      perspective: 1200px;
+      overflow: hidden;
+      display: flex; 
+      justify-content: center; 
+      align-items: center;
+    }
+    .carousel {
+      position: relative;
+      width: 100vw; 
+      height: 100vh;
+      height: 100dvh;
+      transform-style: preserve-3d;
+      transition: transform 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .slide {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100vw; 
+      height: 100vh;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      backface-visibility: hidden;
+      padding: 40px;
+    }
+    .slide-0 { transform: rotateX(0deg) translateZ(0px); }
+    .slide-1 { transform: rotateX(-90deg) translateZ(0px); }
+    .slide-2 { transform: rotateX(-180deg) translateZ(0px); }
+    .slide-3 { transform: rotateX(-270deg) translateZ(0px); }
+
+    .foto-container {
+      width: 250px; height: 250px;
+      border-radius: 50%;
+      overflow: hidden;
+      border: 4px solid rgb(247, 247, 247);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.9);
+      margin-bottom: 40px;
+      transition: transform 0.3s ease;
+      max-width: 70vw;
+      max-height: 70vw;
+    }
+    .foto-container:hover { transform: scale(1.05); }
+    .foto-container img { width: 100%; height: 100%; object-fit: cover; }
+
+    .about-btn {
+      display: inline-block;
+      padding: 18px 50px;
+      background: rgba(255, 255, 255, 0.5);
+      backdrop-filter: blur(10px);
+      border: 2px solid rgba(255, 255, 255, 0.6);
+      color: rgb(24, 23, 23);
+      text-decoration: none;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      font-size: 1rem;
+      border-radius: 50px;
+      transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.8);
+      cursor: pointer;
+      text-align: center;
+      white-space: nowrap;
+    }
+    .about-btn:hover { 
+      background: #000000; 
+      color: #66ccff; 
+      border-color: #66ccff;
+      transform: scale(1.1) translateY(-3px); 
+      box-shadow: 0 15px 30px rgba(102, 204, 255, 0.4);
+    }
+
+    .service-card {
+      background: rgba(20, 20, 20, 0.7);
+      backdrop-filter: blur(15px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      padding: 50px;
+      max-width: 800px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      transition: all 0.3s ease;
+      cursor: pointer;
+      margin: 0 20px;
+    }
+    .service-card:hover { 
+      transform: scale(1.05) rotateY(5deg); 
+      border-color: #66ccff; 
+      box-shadow: 0 15px 40px rgba(102, 204, 255, 0.3);
+    }
+    .service-card h2 { font-family: 'Playfair Display', serif; font-size: 2.8rem; margin-bottom: 20px; }
+    .service-card p { color: #cccccc; line-height: 1.6; font-size: 1.1rem; }
+
+    /* --- OVERLAY CANVAS --- */
+    .canvas-overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      height: 100dvh;
+      z-index: 9998;
+      display: flex; 
+      justify-content: center; 
+      align-items: center;
+      opacity: 0; 
+      pointer-events: none;
+      transition: opacity 0.5s ease;
+      background: rgba(0, 0, 0, 0.7);
+    }
+    .canvas-overlay.active { 
+      opacity: 1; 
+      pointer-events: auto; 
+    }
+
+    .canvas-overlay video.bg-service {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .overlay-click-area {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: 1;
+      cursor: pointer;
+    }
+
+    .canvas-paper {
+      background: #ffffff;
+      color: #1a1a1a;
+      max-width: 1100px;
+      width: 92%;
+      min-height: 500px;
+      padding: 60px;
+      border-radius: 20px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.9);
+      text-align: left;
+      transform: scale(0.9) translateY(30px);
+      transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      position: relative;
+      z-index: 2;
+      overflow-y: auto;
+      max-height: 85vh;
+      max-height: 85dvh;
+      border: none;
+      cursor: default;
+    }
+    .canvas-overlay.active .canvas-paper { transform: scale(1) translateY(0); }
+
+    .canvas-paper h2 { 
+      font-family: 'Playfair Display', serif; 
+      font-size: 2.8rem; 
+      margin-bottom: 25px; 
+      color: #000;
+      text-align: center;
+    }
+
+    .canvas-content {
+      min-height: 250px;
+      padding: 20px;
+      border: none;
+      outline: none;
+      font-size: 1.1rem;
+      line-height: 1.8;
+      color: #333;
+      margin-bottom: 20px;
+      background: #f5f5f5;
+      border-radius: 10px;
+      transition: background 0.3s ease;
+    }
+    .canvas-content p { margin-bottom: 15px; }
+    .canvas-content img {
+      max-width: 100%;
+      height: auto;
+      cursor: nwse-resize;
+      display: inline-block;
+      border: 1px solid #ddd;
+      padding: 2px;
+      position: relative;
+    }
+    
+    .canvas-content a {
+      color: #0066cc;
+      text-decoration: underline;
+      cursor: pointer !important;
+      pointer-events: auto !important;
+      position: relative;
+      z-index: 10;
+    }
+    .canvas-content a:hover {
+      color: #003d80;
+      text-decoration: underline;
+    }
+
+    .social-connect-section {
+      margin-top: 30px;
+      padding: 25px;
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      border-radius: 15px;
+      border: 1px solid #dee2e6;
+      text-align: center;
+    }
+
+    .social-connect-section h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.8rem;
+      color: #1a1a1a;
+      margin-bottom: 10px;
+    }
+
+    .social-connect-section .connect-desc {
+      color: #666;
+      font-size: 0.95rem;
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+
+    .social-icons {
+      display: flex;
+      justify-content: center;
+      gap: 25px;
+      flex-wrap: wrap;
+    }
+
+    .social-icon {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-decoration: none;
+      color: #333;
+      transition: all 0.3s ease;
+      padding: 15px 25px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      min-width: 100px;
+    }
+
+    .social-icon i {
+      font-size: 2.5rem;
+      margin-bottom: 8px;
+      transition: transform 0.3s ease;
+    }
+
+    .social-icon span {
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    .social-icon:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+    }
+
+    .social-icon.email:hover { color: #ea4335; }
+    .social-icon.wa:hover { color: #25d366; }
+    .social-icon.linkedin:hover { color: #0077b5; }
+    .social-icon.github:hover { color: #333333; }
+
+    .social-icon:hover i {
+      transform: scale(1.2);
+    }
+
+    .canvas-actions {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    .canvas-btn {
+      padding: 12px 30px;
+      border: none;
+      border-radius: 30px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: 0.3s;
+      white-space: nowrap;
+      position: relative;
+      z-index: 3;
+    }
+    .canvas-btn:hover { transform: scale(1.05); }
+    
+    .btn-close { background: #000; color: #fff; }
+    .btn-close:hover { background: #333; }
+    
+    .btn-add { 
+      background: #6c757d; 
+      color: #fff; 
+    }
+    .btn-add:hover { 
+      background: #5a6268; 
+    }
+    
+    .btn-save { 
+      background: #28a745; 
+      color: #fff; 
+      display: none;
+    }
+    .btn-save:hover { background: #218838; }
+
+    .nav-dots {
+      position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+      display: flex; gap: 15px; z-index: 100;
+      background: rgba(0,0,0,0.5); padding: 10px 20px; border-radius: 30px;
+      backdrop-filter: blur(5px);
+    }
+    .dot { width: 12px; height: 12px; background: rgba(255,255,255,0.3); border-radius: 50%; transition: 0.3s; cursor: pointer; }
+    .dot.active { background: #66ccff; transform: scale(1.2); }
+
+    @media (max-width: 900px) {
+      .foto-container { width: 180px; height: 180px; }
+      .service-card { padding: 30px; }
+      .service-card h2 { font-size: 2rem; }
+      .canvas-paper { padding: 30px; max-width: 95%; }
+      .canvas-paper h2 { font-size: 2rem; }
+      .canvas-content { font-size: 1rem; min-height: 200px; }
+      .about-btn { padding: 16px 35px; font-size: 0.9rem; }
+      .social-icons { gap: 15px; }
+      .social-icon { padding: 12px 20px; min-width: 80px; }
+      .social-icon i { font-size: 2rem; }
+      .social-connect-section h3 { font-size: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <video id="bg-video" autoplay loop muted playsinline preload="auto">
+    <source src="14471915_3840_2160_30fps.mp4" type="video/mp4">
+  </video>
+
+  <div id="opening-overlay">
+    <video id="opening-video" autoplay muted playsinline onended="closeOpening()">
+      <source src="266034_medium.mp4" type="video/mp4">
+    </video>
+  </div>
+
+  <div class="scene-container">
+    <div class="carousel" id="carousel3D">
+
+      <section class="slide slide-0">
+        <div class="foto-container">
+          <img src="Foto3.jpeg" alt="Foto Saya" onerror="this.src='https://via.placeholder.com/250x250?text=Foto'">
+        </div>
+        <a href="javascript:void(0)" class="about-btn" onclick="openCanvas('tentang-saya', 'utama')">Tentang Saya</a>
+      </section>
+
+      <section class="slide slide-1">
+        <div class="service-card" onclick="openCanvas('it-security', 'sec')">
+          <div style="margin-bottom: 20px;">
+            <img src="sec.jpg" alt="IT Security" style="width:150px;height:150px;border-radius:50%;margin:15px 0;">
+          </div>
+          <h2>IT Security</h2>
+        </div>
+      </section>
+
+      <section class="slide slide-2">
+        <div class="service-card" onclick="openCanvas('website-developer', 'web')">
+          <div style="margin-bottom: 20px;">
+            <img src="website.jpg" alt="Website Developer" style="width:150px;height:150px;border-radius:50%;margin:15px 0;">
+          </div>
+          <h2>Website Developer</h2>
+        </div>
+      </section>
+
+      <section class="slide slide-3">
+        <div class="service-card" onclick="openCanvas('data-analyst', 'data')">
+          <div style="margin-bottom: 20px;">
+            <img src="Data1.jpg" alt="Data1" style="width:150px;height:150px;border-radius:50%;margin:15px 0;">
+          </div>
+          <h2>Data Analyst / Science (AI)</h2>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <!-- CANVAS OVERLAY -->
+  <div id="canvas-overlay" class="canvas-overlay">
+    <video id="canvas-bg-video" class="bg-service" autoplay loop muted playsinline preload="auto">
+      <source src="" type="video/mp4">
+    </video>
+    
+    <div class="overlay-click-area" id="overlay-click-area"></div>
+
+    <div class="canvas-paper" id="canvas-paper">
+      <h2 id="canvas-title">Tentang Saya</h2>
+      
+      <div id="canvas-content" class="canvas-content" contenteditable="false">
+        <p>Silakan klik tombol <strong>"Edit"</strong> dan masukkan password untuk mengedit halaman ini.</p>
+      </div>
+
+      <div id="social-connect-wrapper">
+        <div class="social-connect-section">
+          <h3> Mari Terkoneksi </h3>
+          <p class="connect-desc">
+            Saya selalu terbuka untuk kolaborasi, diskusi proyek, atau peluang baru. 
+            Silakan hubungi saya melalui:
+          </p>
+          <div class="social-icons">
+            <a href="mailto:gustiarya008@gmail.com?subject=Halo%20dari%20Portfolio" class="social-icon email" target="_blank" rel="noopener" title="Email: gustiarya008@gmail.com">
+              <i class="fa-solid fa-envelope"></i>
+              <span>Email</span>
+            </a>
+            
+            <a href="https://wa.me/6281253557897" class="social-icon wa" target="_blank" rel="noopener" title="WhatsApp: +6281253557897">
+              <i class="fa-brands fa-whatsapp"></i>
+              <span>WhatsApp</span>
+            </a>
+            
+            <a href="https://www.linkedin.com/in/i-gusti-arya-aditya-dharma-5a52b226a/" class="social-icon linkedin" target="_blank" rel="noopener" title="LinkedIn: linkedin.com/in/i-gusti-arya-aditya-dharma-5a52b226a/">
+              <i class="fa-brands fa-linkedin-in"></i>
+              <span>LinkedIn</span>
+            </a>
+            
+            <a href="https://github.com/aryaarditya" class="social-icon github" target="_blank" rel="noopener" title="GitHub: github.com/aryaarditya">
+              <i class="fa-brands fa-github"></i>
+              <span>GitHub</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="canvas-actions">
+        <button class="canvas-btn btn-add" id="btn-edit">🔒 Edit</button>
+        <button class="canvas-btn btn-save" id="btn-save" onclick="saveCurrentCanvas()">💾 Simpan</button>
+        <button class="canvas-btn btn-close" onclick="closeCanvas()">✖ Tutup</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav-dots">
+    <div class="dot active" onclick="goToSlide(0)"></div>
+    <div class="dot" onclick="goToSlide(1)"></div>
+    <div class="dot" onclick="goToSlide(2)"></div>
+    <div class="dot" onclick="goToSlide(3)"></div>
+  </div>
+
+  <script>
+    // ==========================================
+    // KONFIGURASI KEAMANAN - HASH AKAN DIGENERATE
+    // ==========================================
+    
+    // PEPPER - kunci rahasia tambahan
+    const PEPPER = 'PortfolioSecure2024!@#';
+    
+    // Password hash akan disimpan di sini (diinisialisasi saat startup)
+    let CORRECT_PASSWORD_HASH = null;
+    
+    // Password yang benar (hanya untuk generate hash pertama kali)
+    const ACTUAL_PASSWORD = 'Predator300';
+    
+    // Daftar tag HTML yang diizinkan
+    const ALLOWED_TAGS = ['p', 'br', 'strong', 'em', 'u', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 
+                          'ul', 'ol', 'li', 'a', 'img', 'span', 'div', 'blockquote', 'code', 'pre'];
+    
+    // Protokol URL yang diizinkan
+    const ALLOWED_PROTOCOLS = ['http:', 'https:', 'mailto:', 'tel:'];
+
+    // ==========================================
+    // FUNGSI HASHING SHA-256 + PEPPER
+    // ==========================================
+    
+    async function generateHash(password) {
+      try {
+        // Gabungkan password dengan pepper
+        const pepperedPassword = password + PEPPER;
+        
+        // Konversi ke ArrayBuffer
+        const encoder = new TextEncoder();
+        const data = encoder.encode(pepperedPassword);
+        
+        // Hash menggunakan SHA-256
+        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+        
+        // Konversi ke hex string
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        
+        return hashHex;
+      } catch (error) {
+        console.error('Error generating hash:', error);
+        return null;
+      }
+    }
+    
+    async function verifyPassword(inputPassword) {
+      try {
+        console.log(' Verifying password...');
+        
+        // Hash input password dengan pepper
+        const inputHash = await generateHash(inputPassword);
+        
+        if (!inputHash || !CORRECT_PASSWORD_HASH) {
+          console.error(' Hash generation failed or correct hash not initialized');
+          return false;
+        }
+        
+        console.log('Input hash:', inputHash);
+        console.log('Correct hash:', CORRECT_PASSWORD_HASH);
+        
+        // Bandingkan hash
+        const isValid = inputHash === CORRECT_PASSWORD_HASH;
+        
+        console.log(isValid ? 'Password valid!' : 'Password tidak valid');
+        
+        return isValid;
+      } catch (error) {
+        console.error(' Error verifikasi:', error);
+        return false;
+      }
+    }
+
+    // ==========================================
+    // FUNGSI KEAMANAN
+    // ==========================================
+
+    function isValidURL(url) {
+      if (!url) return false;
+      
+      const dangerousProtocols = /^(javascript|data|vbscript):/i;
+      if (dangerousProtocols.test(url.trim())) {
+        return false;
+      }
+      
+      try {
+        const parsed = new URL(url);
+        return ALLOWED_PROTOCOLS.includes(parsed.protocol);
+      } catch {
+        if (url.startsWith('mailto:') || url.startsWith('tel:') || url.startsWith('/')) {
+          return true;
+        }
+        return false;
+      }
+    }
+
+    function sanitizeHTML(html) {
+      if (!html) return '';
+      
+      let cleaned = html;
+      
+      // Hapus tag script
+      cleaned = cleaned.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+      
+      // Hapus event handlers
+      cleaned = cleaned.replace(/\son\w+\s*=\s*"[^"]*"/gi, '');
+      cleaned = cleaned.replace(/\son\w+\s*=\s*'[^']*'/gi, '');
+      cleaned = cleaned.replace(/\son\w+\s*=\s*[^\s>]*/gi, '');
+      
+      // Hapus javascript: di href dan src
+      cleaned = cleaned.replace(/href\s*=\s*["']\s*javascript:[^"']*["']/gi, 'href="#"');
+      cleaned = cleaned.replace(/src\s*=\s*["']\s*javascript:[^"']*["']/gi, 'src=""');
+      
+      // Hapus tag iframe
+      cleaned = cleaned.replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '');
+      
+      // Hapus komentar HTML
+      cleaned = cleaned.replace(/<!--[\s\S]*?-->/g, '');
+      
+      return cleaned;
+    }
+
+    // HANDLER LINK
+
+    function setupLinkHandler() {
+      const content = document.getElementById('canvas-content');
+      if (!content) return;
+      
+      content.onclick = function(e) {
+        const link = e.target.closest('a');
+        if (link && link.href && 
+            link.href !== 'javascript:void(0)' && 
+            !link.href.startsWith('javascript:')) {
+          e.preventDefault();
+          e.stopPropagation();
+          
+          if (isValidURL(link.href)) {
+            window.open(link.href, '_blank', 'noopener,noreferrer');
+          }
+        }
+      };
+    }
+
+    // FUNGSI UTAMA
+
+    function closeOpening() {
+      const overlay = document.getElementById('opening-overlay');
+      if (overlay) {
+        overlay.classList.add('hidden');
+        setTimeout(() => { 
+          if(overlay) overlay.style.display = 'none'; 
+        }, 1300);
+      }
+    }
+
+    let currentCanvasType = '';
+
+    function openCanvas(type, bgType) {
+      console.log(' Membuka canvas:', type);
+      
+      const overlay = document.getElementById('canvas-overlay');
+      const title = document.getElementById('canvas-title');
+      const content = document.getElementById('canvas-content');
+      const bgVideo = document.getElementById('canvas-bg-video');
+      const socialWrapper = document.getElementById('social-connect-wrapper');
+      
+      if (!overlay || !title || !content) {
+        console.error(' Element tidak ditemukan!');
+        return;
+      }
+
+      // Set background video
+      if (bgVideo) {
+        const source = bgVideo.querySelector('source');
+        if (source) {
+          const videoMap = {
+            'utama': '14471915_3840_2160_30fps.mp4',
+            'sec': '204635-925250848.mp4',
+            'web': '15682105_3840_2160_30fps.mp4',
+            'data': '275901_medium.mp4'
+          };
+          source.src = videoMap[bgType] || '14471915_3840_2160_30fps.mp4';
+          bgVideo.load();
+        }
+      }
+
+      // Set judul
+      const configMap = {
+        'tentang-saya': { title: 'Tentang Saya', showSocial: true },
+        'it-security': { title: 'IT Security', showSocial: false },
+        'website-developer': { title: 'Website Developer', showSocial: false },
+        'data-analyst': { title: 'Data Analyst / Science (AI)', showSocial: false }
+      };
+      
+      const config = configMap[type] || { title: 'Konten', showSocial: false };
+      title.textContent = config.title;
+      if (socialWrapper) socialWrapper.style.display = config.showSocial ? 'block' : 'none';
+
+      // Load konten
+      const saved = localStorage.getItem('canvas_' + type);
+      if (saved) {
+        content.innerHTML = sanitizeHTML(saved);
+      } else {
+        if (type === 'tentang-saya') {
+          content.innerHTML = '<p>Halo! Saya Gusti Arya, seorang pengembang web dan penggemar keamanan siber.</p><p>Contoh link yang bisa diklik:</p><ul><li><a href="https://github.com/aryaarditya" target="_blank">GitHub Saya</a></li><li><a href="https://www.google.com" target="_blank">Google</a></li></ul><p><strong>🔒 Keamanan:</strong> Password dilindungi SHA-256 + Pepper</p>';
+        } else {
+          content.innerHTML = '<p>Silakan klik tombol <strong>"S Edit"</strong> dan masukkan password untuk mengedit halaman ini.</p>';
+        }
+      }
+
+      // Reset ke mode baca
+      content.setAttribute('contenteditable', 'false');
+      content.style.cursor = 'default';
+      content.style.backgroundColor = '#f5f5f5';
+      
+      // Reset tombol
+      const btnEdit = document.getElementById('btn-edit');
+      const btnSave = document.getElementById('btn-save');
+      
+      if (btnEdit) btnEdit.style.display = 'inline-block';
+      if (btnSave) btnSave.style.display = 'none';
+
+      currentCanvasType = type;
+      overlay.classList.add('active');
+      
+      setupLinkHandler();
+      setupOverlayClickHandler();
+      
+      console.log(' Canvas berhasil dibuka');
+    }
+
+    function closeCanvas() {
+      const overlay = document.getElementById('canvas-overlay');
+      if (overlay) {
+        overlay.classList.remove('active');
+      }
+      removeOverlayClickHandler();
+    }
+
+    function setupOverlayClickHandler() {
+      const overlay = document.getElementById('canvas-overlay');
+      if (!overlay) return;
+      
+      overlay.onclick = function(event) {
+        const paper = document.getElementById('canvas-paper');
+        if (paper && !paper.contains(event.target)) {
+          closeCanvas();
+        }
+      };
+    }
+
+    function removeOverlayClickHandler() {
+      const overlay = document.getElementById('canvas-overlay');
+      if (overlay) {
+        overlay.onclick = null;
+      }
+    }
+
+    // --- UNLOCK EDIT DENGAN SHA-256 HASHING ---
+    async function unlockCanvas() {
+      console.log(' Memulai proses unlock...');
+      
+      // Pastikan hash sudah diinisialisasi
+      if (!CORRECT_PASSWORD_HASH) {
+        alert(' Sistem keamanan belum siap. Silakan refresh halaman.');
+        console.error(' CORRECT_PASSWORD_HASH belum diinisialisasi');
+        return;
+      }
+      
+      // Tampilkan prompt password
+      const password = prompt(' Masukkan password untuk mengedit:');
+      
+      if (password === null) {
+        console.log(' User membatalkan');
+        return;
+      }
+      
+      if (password === '') {
+        alert(' Password tidak boleh kosong!');
+        return;
+      }
+      
+      // Tampilkan loading (opsional)
+      console.log(' Memverifikasi dengan SHA-256 + Pepper...');
+      
+      // Verifikasi password
+      const isValid = await verifyPassword(password);
+      
+      if (!isValid) {
+        alert(' Password salah! Akses ditolak.');
+        console.log(' Verifikasi gagal - password salah');
+        return;
+      }
+      
+      // Password benar!
+      console.log(' Password benar! Mengaktifkan mode edit...');
+      
+      const content = document.getElementById('canvas-content');
+      if (!content) {
+        console.error(' Element content tidak ditemukan!');
+        return;
+      }
+      
+      // Aktifkan contenteditable
+      content.setAttribute('contenteditable', 'true');
+      content.style.cursor = 'text';
+      content.style.backgroundColor = '#ffffff';
+      
+      // Update tombol
+      const btnEdit = document.getElementById('btn-edit');
+      const btnSave = document.getElementById('btn-save');
+      
+      if (btnEdit) btnEdit.style.display = 'none';
+      if (btnSave) btnSave.style.display = 'inline-block';
+      
+      // Setup keyboard shortcut
+      content.onkeydown = function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+          e.preventDefault();
+          insertLink();
+        }
+      };
+      
+      alert(' Mode edit aktif!\n\n Keamanan: SHA-256 + Pepper\n Ctrl+K untuk menambah link\n Link berbahaya otomatis diblokir');
+      
+      console.log(' Mode edit berhasil diaktifkan');
+    }
+
+    function insertLink() {
+      const selection = window.getSelection();
+      if (selection.rangeCount > 0 && !selection.isCollapsed) {
+        const url = prompt(' Masukkan URL (http/https):', 'https://');
+        
+        if (!url) return;
+        
+        if (!isValidURL(url)) {
+          alert(' URL tidak valid! Hanya http://, https://, mailto:, dan tel: yang diizinkan.');
+          return;
+        }
+        
+        const range = selection.getRangeAt(0);
+        const selectedText = range.toString();
+        
+        const link = document.createElement('a');
+        link.href = url;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.textContent = selectedText;
+        
+        range.deleteContents();
+        range.insertNode(link);
+        
+        console.log(' Link aman ditambahkan:', url);
+      } else {
+        alert('Silakan sorot teks terlebih dahulu!');
+      }
+    }
+
+    function saveCurrentCanvas() {
+      console.log(' Menyimpan konten...');
+      
+      const content = document.getElementById('canvas-content');
+      if (!content) return;
+      
+      const rawHTML = content.innerHTML;
+      const safeHTML = sanitizeHTML(rawHTML);
+      
+      localStorage.setItem('canvas_' + currentCanvasType, safeHTML);
+      
+      content.setAttribute('contenteditable', 'false');
+      content.style.cursor = 'default';
+      content.style.backgroundColor = '#f5f5f5';
+      
+      const btnEdit = document.getElementById('btn-edit');
+      const btnSave = document.getElementById('btn-save');
+      
+      if (btnEdit) btnEdit.style.display = 'inline-block';
+      if (btnSave) btnSave.style.display = 'none';
+      
+      content.onkeydown = null;
+      
+      alert(' Perubahan berhasil disimpan dengan aman!');
+      console.log(' Konten tersimpan dengan aman');
+      
+      setupLinkHandler();
+    }
+
+    // --- RESIZE GAMBAR ---
+    let resizeTarget = null;
+    let resizeStartX = 0, resizeStartY = 0, resizeStartWidth = 0, resizeStartHeight = 0;
+    let isResizing = false;
+
+    document.addEventListener('mousedown', function(e) {
+      if (e.target.tagName === 'IMG' && e.target.closest('.canvas-content')) {
+        const content = document.getElementById('canvas-content');
+        if (content && content.getAttribute('contenteditable') === 'true') {
+          const rect = e.target.getBoundingClientRect();
+          if (e.clientX > rect.right - 20 && e.clientY > rect.bottom - 20) {
+            resizeTarget = e.target;
+            resizeStartX = e.clientX;
+            resizeStartY = e.clientY;
+            resizeStartWidth = resizeTarget.offsetWidth;
+            resizeStartHeight = resizeTarget.offsetHeight;
+            isResizing = true;
+            e.preventDefault();
+          }
+        }
+      }
+    });
+
+    document.addEventListener('mousemove', function(e) {
+      if (!isResizing || !resizeTarget) return;
+      const newWidth = Math.max(50, resizeStartWidth + (e.clientX - resizeStartX));
+      const newHeight = Math.max(50, resizeStartHeight + (e.clientY - resizeStartY));
+      resizeTarget.style.width = newWidth + 'px';
+      resizeTarget.style.height = newHeight + 'px';
+      resizeTarget.style.maxWidth = 'none';
+    });
+
+    document.addEventListener('mouseup', function() {
+      isResizing = false;
+      resizeTarget = null;
+    });
+
+    // --- EFEK BOLA 3D ---
+    const carousel = document.getElementById('carousel3D');
+    let currentIndex = 0;
+    let isAnimating = false;
+
+    function goToSlide(index) {
+      if (isAnimating || !carousel) return;
+      if (index < 0) index = 3;
+      if (index > 3) index = 0;
+      isAnimating = true;
+      currentIndex = index;
+      carousel.style.transform = 'rotateX(' + (-index * 90) + 'deg)';
+      document.querySelectorAll('.dot').forEach(function(d, i) {
+        d.classList.toggle('active', i === index);
+      });
+      setTimeout(function() { isAnimating = false; }, 1250);
+    }
+
+    window.addEventListener('wheel', function(e) {
+      if (document.getElementById('canvas-overlay').classList.contains('active')) return;
+      if (e.deltaY > 0) goToSlide(currentIndex + 1);
+      else goToSlide(currentIndex - 1);
+    });
+
+    let touchStartY = 0;
+    window.addEventListener('touchstart', function(e) {
+      if (!document.getElementById('canvas-overlay').classList.contains('active')) {
+        touchStartY = e.changedTouches[0].screenY;
+      }
+    });
+    
+    window.addEventListener('touchend', function(e) {
+      if (document.getElementById('canvas-overlay').classList.contains('active')) return;
+      const diff = touchStartY - e.changedTouches[0].screenY;
+      if (Math.abs(diff) > 50) {
+        if (diff > 0) goToSlide(currentIndex + 1);
+        else goToSlide(currentIndex - 1);
+      }
+    });
+
+    
+    async function initializeSecurity() {
+      console.log(' Menginisialisasi sistem keamanan...');
+      
+      // Generate hash dari password yang benar
+      CORRECT_PASSWORD_HASH = await generateHash(ACTUAL_PASSWORD);
+      
+      if (CORRECT_PASSWORD_HASH) {
+        console.log(' Hash password berhasil digenerate');
+        console.log(' Hash: ' + CORRECT_PASSWORD_HASH.substring(0, 16) + '...');
+        console.log(' Password: ' + ACTUAL_PASSWORD);
+        console.log(' Pepper: ' + PEPPER);
+      } else {
+        console.error(' Gagal generate hash! Sistem keamanan tidak aktif.');
+      }
+      
+      // Setup tombol edit
+      const editBtn = document.getElementById('btn-edit');
+      if (editBtn) {
+        editBtn.onclick = unlockCanvas;
+        console.log(' Tombol Edit siap');
+      }
+    }
+    
+    // Jalankan inisialisasi saat halaman dimuat
+    window.addEventListener('DOMContentLoaded', initializeSecurity);
+    
+    // Proteksi tambahan
+    Object.freeze(ALLOWED_TAGS);
+    Object.freeze(ALLOWED_PROTOCOLS);
+
+    console.log(' Web siap!');
+    console.log(' Sistem keamanan: SHA-256 + Pepper');
+    console.log(' Menunggu inisialisasi hash...');
+  </script>
+</body>
+</html>
